@@ -18,16 +18,35 @@ jobs:
     timeout-minutes: 60
 
     steps:
+      - name: Content dependency check.
+        id: content
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          ref=""
+          if [ -n "$PR_BODY" ]; then
+            pr=$(printf '%s' "$PR_BODY" | grep -oiP \
+              '(?:Requires|Depends on)\s+\[?(?:https?://github\.com/)?ss14Starlight/space-station-14(?:#|/pull/)\K[0-9]+' \
+              | head -n1) || true
+            if [ -n "$pr" ]; then
+              ref="refs/pull/$pr/head"
+              echo "#$pr ($ref)"
+            fi
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
       - name: Check out content
         uses: actions/checkout@v4.2.2
         with:
           repository: ss14Starlight/space-station-14
+          ref: ${{ steps.content.outputs.ref }}
           submodules: recursive
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4.1.0
         with:
           dotnet-version: 10.0.x
+
       - name: Disable submodule autoupdate
         run: touch BuildChecker/DISABLE_SUBMODULE_AUTOUPDATE
 
@@ -37,7 +56,7 @@ jobs:
           ENGINE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
           cd RobustToolbox
-          echo "Fetching $ENGINE_SHA from $ENGINE_REPO"
+          echo "SHA: $ENGINE_SHA | REPO: $ENGINE_REPO"
           git remote add engine "https://github.com/$ENGINE_REPO.git"
           git fetch engine "$ENGINE_SHA"
           git checkout FETCH_HEAD
