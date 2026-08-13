@@ -1,4 +1,4 @@
-name: Test content master against engine
+name: Test content starlight-dev against engine
 
 on:
   push:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Check out content
@@ -32,25 +32,36 @@ jobs:
         run: touch BuildChecker/DISABLE_SUBMODULE_AUTOUPDATE
 
       - name: Check out engine version
+        env:
+          ENGINE_REPO: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name || github.repository }}
+          ENGINE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: |
           cd RobustToolbox
-          git fetch origin ${{ github.sha }}
+          echo "Fetching $ENGINE_SHA from $ENGINE_REPO"
+          git remote add engine "https://github.com/$ENGINE_REPO.git"
+          git fetch engine "$ENGINE_SHA"
           git checkout FETCH_HEAD
           git submodule update --init --recursive
+
       - name: Replace global.json
         run: cp RobustToolbox/global.json .
+
       - name: Install dependencies
         run: dotnet restore
+
       - name: Build (Debug)
         run: dotnet build --configuration DebugOpt --no-restore /m
+
       - name: Content.Tests
         shell: pwsh
         run: dotnet test --no-build --configuration DebugOpt Content.Tests/Content.Tests.csproj -- NUnit.ConsoleOut=0 NUnit.TestOutputXml="$(pwd)/test_results"
+
       - name: Content.IntegrationTests
         shell: pwsh
         run: |
           $env:DOTNET_gcServer=1
           dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj -- NUnit.ConsoleOut=0 NUnit.MapWarningTo=Failed NUnit.TestOutputXml="logs" NUnit.WorkDirectory="$(pwd)/test_results"
+
       - name: Archive NUnit3 test results.
         if: always()
         uses: actions/upload-artifact@v4
@@ -58,5 +69,6 @@ jobs:
           name: nunit3-results
           path: test_results/*
           retention-days: 7
+
       - name: Build (Release)
         run: dotnet build --configuration Release --no-restore /m
