@@ -21,7 +21,7 @@ jobs:
       - name: Check out content
         uses: actions/checkout@v4.2.2
         with:
-          repository: space-wizards/space-station-14
+          repository: ss14Starlight/space-station-14
           submodules: recursive
 
       - name: Setup .NET Core
