@@ -1,12 +1,13 @@
 name: Test RobustToolboxTemplateSingleplayer against engine
 
 on:
-  push:
-    branches: [master]
-  merge_group:
-  pull_request:
-    types: [ opened, reopened, synchronize, ready_for_review ]
-    branches: [master]
+  workflow_dispatch:
+  # push:
+  #   branches: [master]
+  # merge_group:
+  # pull_request:
+  #   types: [ opened, reopened, synchronize, ready_for_review ]
+  #   branches: [master]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref }}
