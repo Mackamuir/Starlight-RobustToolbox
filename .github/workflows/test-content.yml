@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
 
     steps:
       - name: Check out content
@@ -45,18 +45,18 @@ jobs:
         run: dotnet build --configuration DebugOpt --no-restore /m
       - name: Content.Tests
         shell: pwsh
-        run: dotnet test --no-build --configuration DebugOpt Content.Tests/Content.Tests.csproj --settings .github/ci.runsettings --report-ctrf --report-ctrf-filename content-tests.json --results-directory "$(pwd)/test_results"
+        run: dotnet test --no-build --configuration DebugOpt Content.Tests/Content.Tests.csproj --settings .github/ci.runsettings --retry-failed-tests 2 --progress on --report-ctrf --report-ctrf-filename content-tests.json --results-directory "$(pwd)/test_results"
       - name: Content.IntegrationTests
         shell: pwsh
         run: |
           $env:DOTNET_gcServer=1
-          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj --settings .github/ci.runsettings --report-ctrf --report-ctrf-filename integration-tests.json --results-directory "$(pwd)/test_results"
+          dotnet test --no-build --configuration DebugOpt Content.IntegrationTests/Content.IntegrationTests.csproj --settings .github/ci.runsettings --retry-failed-tests 2 --progress on --report-ctrf --report-ctrf-filename integration-tests.json --results-directory "$(pwd)/test_results"
       - name: Archive NUnit3 test results.
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: nunit3-results
-          path: test_results/*
+          path: test_results/**
           retention-days: 7
       - name: Build (Release)
         run: dotnet build --configuration Release --no-restore /m

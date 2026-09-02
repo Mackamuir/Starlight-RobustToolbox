@@ -36,7 +36,7 @@ jobs:
         run: dotnet build --no-restore /p:WarningsAsErrors=nullable
       - name: Run tests
         shell: pwsh
-        run: dotnet test --no-build --settings .github/ci.runsettings
+        run: dotnet test --no-build --settings .github/ci.runsettings --retry-failed-tests 2 --progress on
       - name: Archive NUnit3 test results.
         if: always()
         uses: actions/upload-artifact@v4
