@@ -1,18 +1,17 @@
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.CompilerServices;
+using NUnit.Framework;
 using Robust.Shared.Utility;
-
-namespace Robust.Shared.Maths.Tests._Starlight;
 
 /// <summary>
 /// Makes failed <see cref="Debug.Assert"/> calls throw instead of aborting the process.
 /// </summary>
-internal static class DebugAssertShim
+[SetUpFixture]
+public sealed class DebugAssertShim
 {
-    [ModuleInitializer]
-    internal static void Initialize()
+    [OneTimeSetUp]
+    public void InstallThrowingAssertHandler()
     {
         try
         {
